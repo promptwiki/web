@@ -4,7 +4,6 @@ const docs = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    slug: z.string().optional(),
     purpose: z.enum(['guide', 'rule', 'template', 'example', 'reference']).optional(),
     level: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
     persona: z.array(z.enum(['general', 'power-user', 'developer', 'organization'])).optional(),
