@@ -6,6 +6,7 @@ interface Props {
 
 const { title = 'PromptWiki', lang = 'ko' } = Astro.props;
 const siteTitle = title === 'PromptWiki' ? 'PromptWiki' : `${title} — PromptWiki`;
+const base = import.meta.env.BASE_URL.replace(/\/$/, ''); // '/web' or ''
 
 const nav = {
   ko: { home: '홈', docs: '문서', contribute: '기여하기' },
@@ -20,16 +21,16 @@ const nav = {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="AI에게 일을 시키는 법을, 집단 지성으로 만든다." />
     <title>{siteTitle}</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
   </head>
   <body class="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
     <header class="border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur z-50">
       <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        <a href={`/${lang}`} class="font-bold text-lg text-brand-600 dark:text-brand-400 hover:opacity-80 transition-opacity">
+        <a href={`${base}/${lang}`} class="font-bold text-lg text-brand-600 dark:text-brand-400 hover:opacity-80 transition-opacity">
           PromptWiki
         </a>
         <nav class="flex items-center gap-5 text-sm font-medium">
-          <a href={`/${lang}`} class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">{nav.docs}</a>
+          <a href={`${base}/${lang}`} class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">{nav.docs}</a>
           <a
             href={`https://github.com/promptwiki/content/blob/main/_meta/contributing.md`}
             target="_blank"
@@ -39,7 +40,7 @@ const nav = {
             {nav.contribute}
           </a>
           <a
-            href={lang === 'ko' ? '/en' : '/ko'}
+            href={lang === 'ko' ? `${base}/en` : `${base}/ko`}
             class="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {lang === 'ko' ? 'EN' : 'KO'}
