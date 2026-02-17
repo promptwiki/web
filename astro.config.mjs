@@ -3,7 +3,7 @@ import tailwind from '@astrojs/tailwind';
 import mdx from '@astrojs/mdx';
 
 export default defineConfig({
-  site: 'https://pmptwiki.com',
+  site: 'https://prmtwiki.com',
   output: 'static',
   i18n: {
     defaultLocale: 'ko',
