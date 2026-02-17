@@ -1,0 +1,61 @@
+---
+interface Props {
+  title?: string;
+  lang?: 'ko' | 'en';
+}
+
+const { title = 'PromptWiki', lang = 'ko' } = Astro.props;
+const siteTitle = title === 'PromptWiki' ? 'PromptWiki' : `${title} — PromptWiki`;
+
+const nav = {
+  ko: { home: '홈', docs: '문서', contribute: '기여하기' },
+  en: { home: 'Home', docs: 'Docs', contribute: 'Contribute' },
+}[lang];
+---
+
+<!doctype html>
+<html lang={lang} class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="AI에게 일을 시키는 법을, 집단 지성으로 만든다." />
+    <title>{siteTitle}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
+    <header class="border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur z-50">
+      <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        <a href={`/${lang}`} class="font-bold text-lg text-brand-600 dark:text-brand-400 hover:opacity-80 transition-opacity">
+          PromptWiki
+        </a>
+        <nav class="flex items-center gap-5 text-sm font-medium">
+          <a href={`/${lang}`} class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">{nav.docs}</a>
+          <a
+            href={`https://github.com/promptwiki/content/blob/main/_meta/contributing.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            {nav.contribute}
+          </a>
+          <a
+            href={lang === 'ko' ? '/en' : '/ko'}
+            class="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {lang === 'ko' ? 'EN' : 'KO'}
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="border-t border-gray-200 dark:border-gray-800 py-8 mt-16">
+      <div class="max-w-5xl mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
+        <p>PromptWiki — CC BY-SA 4.0 · <a href="https://github.com/promptwiki" target="_blank" rel="noopener noreferrer" class="hover:underline">GitHub</a></p>
+      </div>
+    </footer>
+  </body>
+</html>

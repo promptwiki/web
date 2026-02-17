@@ -1,0 +1,52 @@
+---
+import StatusBadge from './StatusBadge.astro';
+
+interface Props {
+  title: string;
+  purpose?: string;
+  level?: string;
+  status?: string;
+  tags?: string[];
+  href: string;
+  lang?: 'ko' | 'en';
+}
+
+const { title, purpose, level, status = 'stable', tags = [], href, lang = 'ko' } = Astro.props;
+
+const purposeLabel: Record<string, Record<string, string>> = {
+  ko: { guide: '가이드', rule: '규칙', template: '템플릿', example: '사례', reference: '레퍼런스' },
+  en: { guide: 'Guide', rule: 'Rule', template: 'Template', example: 'Example', reference: 'Reference' },
+};
+
+const levelLabel: Record<string, Record<string, string>> = {
+  ko: { beginner: '입문', intermediate: '중급', advanced: '고급' },
+  en: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+};
+---
+
+<a
+  href={href}
+  class="block p-5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md dark:hover:shadow-brand-900/20 transition-all duration-200 group bg-white dark:bg-gray-900"
+>
+  <div class="flex items-start justify-between gap-3 mb-2">
+    <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors leading-snug">
+      {title}
+    </h3>
+    {status && <StatusBadge status={status} lang={lang} />}
+  </div>
+  <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+    {purpose && (
+      <span class="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+        {purposeLabel[lang]?.[purpose] ?? purpose}
+      </span>
+    )}
+    {level && (
+      <span class="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+        {levelLabel[lang]?.[level] ?? level}
+      </span>
+    )}
+    {tags.slice(0, 3).map((tag) => (
+      <span class="text-gray-400 dark:text-gray-500">#{tag}</span>
+    ))}
+  </div>
+</a>

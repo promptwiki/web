@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DocCard from '../../components/DocCard.astro';
+import FilterBar from '../../components/FilterBar.astro';
+
+export function getStaticPaths() {
+  return [{ params: { lang: 'ko' } }, { params: { lang: 'en' } }];
+}
+
+const { lang } = Astro.params as { lang: 'ko' | 'en' };
+
+const purpose = Astro.url.searchParams.get('purpose') ?? undefined;
+const level = Astro.url.searchParams.get('level') ?? undefined;
+
+const allDocs = await getCollection('docs');
+
+const docs = allDocs
+  .filter((entry) => {
+    const data = entry.data;
+    // Filter out non-document entries (meta files without purpose)
+    if (!data.purpose) return false;
+    // Language match
+    if (data.lang && data.lang !== lang) return false;
+    // Purpose filter
+    if (purpose && data.purpose !== purpose) return false;
+    // Level filter
+    if (level && data.level !== level) return false;
+    // Only show stable or recommended
+    if (data.status === 'draft' || data.status === 'review' || data.status === 'deprecated') return false;
+    return true;
+  })
+  .sort((a, b) => {
+    // recommended first
+    const order = { recommended: 0, stable: 1 };
+    const ao = order[a.data.status as keyof typeof order] ?? 2;
+    const bo = order[b.data.status as keyof typeof order] ?? 2;
+    return ao - bo;
+  });
+
+const ui = {
+  ko: {
+    hero: 'AI에게 일을 시키는 법을,\n집단 지성으로 만든다.',
+    heroSub: 'GitHub 기반 기여로 검증·진화하는 AI 활용 가이드',
+    count: (n: number) => `${n}개의 문서`,
+    noResult: '해당 조건의 문서가 없습니다.',
+    contribute: '문서 기여하기 →',
+  },
+  en: {
+    hero: 'Collective intelligence\nfor prompting AI.',
+    heroSub: 'Verified and evolving AI guides, built through GitHub contributions.',
+    count: (n: number) => `${n} documents`,
+    noResult: 'No documents found for this filter.',
+    contribute: 'Contribute a doc →',
+  },
+}[lang];
+---
+
+<BaseLayout lang={lang}>
+  <!-- Hero -->
+  <section class="bg-gradient-to-b from-brand-50 to-white dark:from-gray-900 dark:to-gray-950 py-16 px-4">
+    <div class="max-w-5xl mx-auto text-center">
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white leading-tight whitespace-pre-line mb-3">
+        {ui.hero}
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400 text-lg mb-8">{ui.heroSub}</p>
+      <div class="flex flex-wrap justify-center gap-3 text-sm">
+        <code class="bg-gray-900 dark:bg-gray-800 text-green-400 px-4 py-2 rounded-lg font-mono">
+          npx promptwiki search "코드 리뷰"
+        </code>
+      </div>
+    </div>
+  </section>
+
+  <!-- Document list -->
+  <section class="max-w-5xl mx-auto px-4 py-10">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <FilterBar lang={lang} activePurpose={purpose} activeLevel={level} />
+      <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        {ui.count(docs.length)}
+      </span>
+    </div>
+
+    {docs.length === 0 ? (
+      <div class="text-center py-20 text-gray-400 dark:text-gray-500">
+        <p class="text-lg mb-4">{ui.noResult}</p>
+        <a
+          href={`https://github.com/promptwiki/content`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-brand-600 dark:text-brand-400 hover:underline text-sm"
+        >
+          {ui.contribute}
+        </a>
+      </div>
+    ) : (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {docs.map((doc) => {
+          const slugParts = doc.id.replace(/\.mdx?$/, '').split('/');
+          const href = `/${lang}/${slugParts.join('/')}`;
+          return (
+            <DocCard
+              title={doc.data.title}
+              purpose={doc.data.purpose}
+              level={doc.data.level}
+              status={doc.data.status}
+              tags={doc.data.tags}
+              href={href}
+              lang={lang}
+            />
+          );
+        })}
+      </div>
+    )}
+  </section>
+</BaseLayout>

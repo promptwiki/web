@@ -1,0 +1,132 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+
+export async function getStaticPaths() {
+  const allDocs = await getCollection('docs');
+
+  return allDocs
+    .filter((entry) => entry.data.purpose) // skip meta files
+    .flatMap((entry) => {
+      const parts = entry.id.replace(/\.mdx?$/, '').split('/');
+      const lang = parts[0] as 'ko' | 'en';
+      const slug = parts.slice(1).join('/');
+      return [{ params: { lang, slug }, props: { entry } }];
+    });
+}
+
+interface Props {
+  entry: CollectionEntry<'docs'>;
+}
+
+const { entry } = Astro.props;
+const { lang } = Astro.params as { lang: 'ko' | 'en' };
+const { Content } = await entry.render();
+
+const data = entry.data;
+const githubPath = `https://github.com/promptwiki/content/blob/main/${entry.id}`;
+const githubEdit = `https://github.com/promptwiki/content/edit/main/${entry.id}`;
+const githubHistory = `https://github.com/promptwiki/content/commits/main/${entry.id}`;
+const issueUrl = `https://github.com/promptwiki/content/issues/new?template=improvement.yml&title=${encodeURIComponent('[개선] ' + data.title)}`;
+
+const ui = {
+  ko: {
+    edit: '수정하기',
+    history: '변경 이력',
+    issue: '이슈 남기기',
+    meta: { purpose: '목적', level: '난이도', persona: '대상', tags: '태그', updated: '최종 수정' },
+    purposeLabel: { guide: '가이드', rule: '규칙', template: '템플릿', example: '사례', reference: '레퍼런스' },
+    levelLabel: { beginner: '입문', intermediate: '중급', advanced: '고급' },
+    personaLabel: { general: '일반', 'power-user': '파워유저', developer: '개발자', organization: '조직' },
+  },
+  en: {
+    edit: 'Edit on GitHub',
+    history: 'History',
+    issue: 'Open Issue',
+    meta: { purpose: 'Purpose', level: 'Level', persona: 'Audience', tags: 'Tags', updated: 'Updated' },
+    purposeLabel: { guide: 'Guide', rule: 'Rule', template: 'Template', example: 'Example', reference: 'Reference' },
+    levelLabel: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+    personaLabel: { general: 'General', 'power-user': 'Power User', developer: 'Developer', organization: 'Organization' },
+  },
+}[lang];
+---
+
+<BaseLayout title={data.title} lang={lang}>
+  <article class="max-w-3xl mx-auto px-4 py-10">
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="flex items-center gap-2 mb-3">
+        {data.status && <StatusBadge status={data.status} lang={lang} />}
+        {data.purpose && (
+          <span class="text-xs text-gray-500 dark:text-gray-400">
+            {ui.purposeLabel[data.purpose as keyof typeof ui.purposeLabel] ?? data.purpose}
+            {data.level && ` · ${ui.levelLabel[data.level as keyof typeof ui.levelLabel] ?? data.level}`}
+          </span>
+        )}
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white leading-tight mb-4">
+        {data.title}
+      </h1>
+
+      <!-- GitHub actions -->
+      <div class="flex flex-wrap gap-3 text-sm">
+        <a href={githubEdit} target="_blank" rel="noopener noreferrer"
+          class="flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:underline">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          {ui.edit}
+        </a>
+        <a href={githubHistory} target="_blank" rel="noopener noreferrer"
+          class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {ui.history}
+        </a>
+        <a href={issueUrl} target="_blank" rel="noopener noreferrer"
+          class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          {ui.issue}
+        </a>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="prose dark:prose-invert prose-gray max-w-none
+      prose-headings:font-bold
+      prose-a:text-brand-600 dark:prose-a:text-brand-400
+      prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+      prose-pre:bg-gray-900 dark:prose-pre:bg-gray-800
+    ">
+      <Content />
+    </div>
+
+    <!-- Meta sidebar-style bottom section -->
+    {(data.tags?.length || data.persona?.length || data.updated) && (
+      <aside class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 text-sm text-gray-500 dark:text-gray-400 space-y-2">
+        {data.persona?.length && (
+          <div class="flex gap-2">
+            <span class="font-medium text-gray-700 dark:text-gray-300 w-16 shrink-0">{ui.meta.persona}</span>
+            <span>{data.persona.map((p) => ui.personaLabel[p as keyof typeof ui.personaLabel] ?? p).join(', ')}</span>
+          </div>
+        )}
+        {data.tags?.length && (
+          <div class="flex gap-2">
+            <span class="font-medium text-gray-700 dark:text-gray-300 w-16 shrink-0">{ui.meta.tags}</span>
+            <span>{data.tags.map((t) => `#${t}`).join(' ')}</span>
+          </div>
+        )}
+        {data.updated && (
+          <div class="flex gap-2">
+            <span class="font-medium text-gray-700 dark:text-gray-300 w-16 shrink-0">{ui.meta.updated}</span>
+            <span>{data.updated}</span>
+          </div>
+        )}
+      </aside>
+    )}
+  </article>
+</BaseLayout>

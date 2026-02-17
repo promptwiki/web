@@ -1,0 +1,73 @@
+---
+interface Props {
+  lang?: 'ko' | 'en';
+  activePurpose?: string;
+  activeLevel?: string;
+}
+
+const { lang = 'ko', activePurpose, activeLevel } = Astro.props;
+const currentUrl = Astro.url;
+
+function buildUrl(params: Record<string, string | undefined>) {
+  const url = new URL(currentUrl);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) url.searchParams.set(k, v);
+    else url.searchParams.delete(k);
+  });
+  return url.pathname + url.search;
+}
+
+const purposes = [
+  { value: '', labelKo: '전체', labelEn: 'All' },
+  { value: 'guide', labelKo: '가이드', labelEn: 'Guide' },
+  { value: 'rule', labelKo: '규칙', labelEn: 'Rule' },
+  { value: 'template', labelKo: '템플릿', labelEn: 'Template' },
+  { value: 'example', labelKo: '사례', labelEn: 'Example' },
+  { value: 'reference', labelKo: '레퍼런스', labelEn: 'Reference' },
+];
+
+const levels = [
+  { value: '', labelKo: '전체', labelEn: 'All' },
+  { value: 'beginner', labelKo: '입문', labelEn: 'Beginner' },
+  { value: 'intermediate', labelKo: '중급', labelEn: 'Intermediate' },
+  { value: 'advanced', labelKo: '고급', labelEn: 'Advanced' },
+];
+---
+
+<div class="flex flex-wrap gap-3 items-center">
+  <div class="flex flex-wrap gap-1.5">
+    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 self-center mr-1">
+      {lang === 'ko' ? '목적' : 'Purpose'}:
+    </span>
+    {purposes.map((p) => (
+      <a
+        href={buildUrl({ purpose: p.value || undefined, level: activeLevel })}
+        class={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+          (activePurpose ?? '') === p.value
+            ? 'bg-brand-600 text-white'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+        }`}
+      >
+        {lang === 'ko' ? p.labelKo : p.labelEn}
+      </a>
+    ))}
+  </div>
+
+  <div class="flex flex-wrap gap-1.5">
+    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 self-center mr-1">
+      {lang === 'ko' ? '난이도' : 'Level'}:
+    </span>
+    {levels.map((l) => (
+      <a
+        href={buildUrl({ purpose: activePurpose, level: l.value || undefined })}
+        class={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+          (activeLevel ?? '') === l.value
+            ? 'bg-brand-600 text-white'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+        }`}
+      >
+        {lang === 'ko' ? l.labelKo : l.labelEn}
+      </a>
+    ))}
+  </div>
+</div>
