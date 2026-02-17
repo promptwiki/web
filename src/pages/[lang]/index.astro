@@ -98,7 +98,7 @@ const ui = {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {docs.map((doc) => {
           const slugParts = doc.id.replace(/\.mdx?$/, '').split('/');
-          const href = `${base}/${lang}/${slugParts.join('/')}`;
+          const href = `${base}/${slugParts.join('/')}`;
           return (
             <DocCard
               title={doc.data.title}
