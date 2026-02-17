@@ -2,6 +2,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import StatusBadge from '../../components/StatusBadge.astro';
+import DocCard from '../../components/DocCard.astro';
 
 export async function getStaticPaths() {
   const allDocs = await getCollection('docs');
@@ -23,6 +24,19 @@ interface Props {
 const { entry } = Astro.props;
 const { lang } = Astro.params as { lang: 'ko' | 'en' };
 const { Content } = await entry.render();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Related docs by shared tags
+const allDocs = await getCollection('docs');
+const relatedDocs = allDocs
+  .filter((doc) => {
+    if (!doc.data.purpose) return false;
+    if (doc.id === entry.id) return false;
+    if (doc.data.lang && doc.data.lang !== lang) return false;
+    if (!doc.data.tags?.length || !entry.data.tags?.length) return false;
+    return doc.data.tags.some((t: string) => entry.data.tags?.includes(t));
+  })
+  .slice(0, 3);
 
 const data = entry.data;
 const githubPath = `https://github.com/promptwiki/content/blob/main/${entry.id}`;
@@ -127,6 +141,32 @@ const ui = {
           </div>
         )}
       </aside>
+    )}
+
+    <!-- Related Docs -->
+    {relatedDocs.length > 0 && (
+      <section class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4">
+          {lang === 'ko' ? '관련 문서' : 'Related Docs'}
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {relatedDocs.map((doc: (typeof relatedDocs)[number]) => {
+            const parts = doc.id.replace(/\.mdx?$/, '').split('/');
+            const href = `${base}/${parts.join('/')}`;
+            return (
+              <DocCard
+                title={doc.data.title ?? ''}
+                purpose={doc.data.purpose}
+                level={doc.data.level}
+                status={doc.data.status}
+                tags={doc.data.tags}
+                href={href}
+                lang={lang}
+              />
+            );
+          })}
+        </div>
+      </section>
     )}
   </article>
 </BaseLayout>

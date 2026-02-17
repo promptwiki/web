@@ -6,11 +6,11 @@ interface Props {
 
 const { title = 'PromptWiki', lang = 'ko' } = Astro.props;
 const siteTitle = title === 'PromptWiki' ? 'PromptWiki' : `${title} — PromptWiki`;
-const base = import.meta.env.BASE_URL.replace(/\/$/, ''); // '/web' or ''
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 const nav = {
-  ko: { home: '홈', docs: '문서', contribute: '기여하기' },
-  en: { home: 'Home', docs: 'Docs', contribute: 'Contribute' },
+  ko: { docs: '문서', contribute: '기여하기', search: '검색...' },
+  en: { docs: 'Docs', contribute: 'Contribute', search: 'Search...' },
 }[lang];
 ---
 
@@ -22,23 +22,54 @@ const nav = {
     <meta name="description" content="AI에게 일을 시키는 법을, 집단 지성으로 만든다." />
     <title>{siteTitle}</title>
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <!-- Pagefind styles -->
+    <link href={`${base}/pagefind/pagefind-ui.css`} rel="stylesheet" />
   </head>
   <body class="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
     <header class="border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur z-50">
-      <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        <a href={`${base}/${lang}`} class="font-bold text-lg text-brand-600 dark:text-brand-400 hover:opacity-80 transition-opacity">
+      <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+        <a href={`${base}/${lang}`} class="font-bold text-lg text-brand-600 dark:text-brand-400 hover:opacity-80 transition-opacity shrink-0">
           PromptWiki
         </a>
-        <nav class="flex items-center gap-5 text-sm font-medium">
-          <a href={`${base}/${lang}`} class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">{nav.docs}</a>
+
+        <!-- Search trigger -->
+        <button
+          id="search-trigger"
+          class="hidden sm:flex items-center gap-2 flex-1 max-w-xs px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          aria-label="Search"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {nav.search}
+          <span class="ml-auto text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded">⌘K</span>
+        </button>
+
+        <nav class="flex items-center gap-3 sm:gap-5 text-sm font-medium">
+          <!-- Mobile search icon -->
+          <button id="search-trigger-mobile" class="sm:hidden text-gray-500 dark:text-gray-400" aria-label="Search">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+          <a href={`${base}/${lang}`} class="hidden sm:block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">{nav.docs}</a>
           <a
-            href={`https://github.com/promptwiki/content/blob/main/_meta/contributing.md`}
+            href="https://github.com/promptwiki/content/blob/main/_meta/contributing.md"
             target="_blank"
             rel="noopener noreferrer"
-            class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            class="hidden sm:block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             {nav.contribute}
           </a>
+          <!-- Dark mode toggle -->
+          <button id="theme-toggle" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" aria-label="Toggle dark mode">
+            <svg id="icon-sun" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg id="icon-moon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
           <a
             href={lang === 'ko' ? `${base}/en` : `${base}/ko`}
             class="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -49,6 +80,16 @@ const nav = {
       </div>
     </header>
 
+    <!-- Search modal -->
+    <div id="search-modal" class="fixed inset-0 z-[100] hidden">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="search-backdrop"></div>
+      <div class="relative max-w-xl mx-auto mt-20 px-4">
+        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div id="search-container" class="p-4"></div>
+        </div>
+      </div>
+    </div>
+
     <main class="flex-1">
       <slot />
     </main>
@@ -58,5 +99,47 @@ const nav = {
         <p>PromptWiki — CC BY-SA 4.0 · <a href="https://github.com/promptwiki" target="_blank" rel="noopener noreferrer" class="hover:underline">GitHub</a></p>
       </div>
     </footer>
+
+    <!-- Pagefind JS -->
+    <script src={`${base}/pagefind/pagefind-ui.js`} is:inline></script>
+    <script is:inline define:vars={{ base }}>
+      // Dark mode
+      const root = document.documentElement;
+      const stored = localStorage.getItem('theme');
+      if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        root.classList.add('dark');
+      }
+      document.getElementById('theme-toggle')?.addEventListener('click', () => {
+        root.classList.toggle('dark');
+        localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+      });
+
+      // Search modal
+      let searchInitialized = false;
+      const modal = document.getElementById('search-modal');
+      const backdrop = document.getElementById('search-backdrop');
+
+      function openSearch() {
+        modal?.classList.remove('hidden');
+        if (!searchInitialized && typeof PagefindUI !== 'undefined') {
+          new PagefindUI({
+            element: '#search-container',
+            baseUrl: base || '/',
+            resetStyles: false,
+          });
+          searchInitialized = true;
+        }
+        setTimeout(() => document.querySelector('.pagefind-ui__search-input')?.focus(), 50);
+      }
+      function closeSearch() { modal?.classList.add('hidden'); }
+
+      document.getElementById('search-trigger')?.addEventListener('click', openSearch);
+      document.getElementById('search-trigger-mobile')?.addEventListener('click', openSearch);
+      backdrop?.addEventListener('click', closeSearch);
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+        if (e.key === 'Escape') closeSearch();
+      });
+    </script>
   </body>
 </html>
