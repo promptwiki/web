@@ -28,7 +28,6 @@ const projectsWithCount: ProjectData[] = allProjects
     };
   })
   .sort((a, b) => {
-    // completed 먼저, 그 다음 updatedAt 순
     if (a.status === 'completed' && b.status !== 'completed') return -1;
     if (a.status !== 'completed' && b.status === 'completed') return 1;
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
@@ -36,10 +35,78 @@ const projectsWithCount: ProjectData[] = allProjects
 
 const ui = {
   ko: {
+    // Hero
     hero: 'AI와 만드는 법을,\n모두와 나눈다.',
     heroSub: '6개 질문에 답하면 AI 프롬프트가 생성됩니다. AI와 대화하며 제품을 만들고, 그 과정을 기록하세요.',
     cta: 'npm i -g pmpt-cli && pmpt init',
     ctaHint: '1분만에 시작하기',
+
+    // How it Works
+    howTitle: '어떻게 작동하나요?',
+    howSteps: [
+      { num: '1', title: 'pmpt plan', desc: '6개 질문에 답하면 AI 프롬프트 생성' },
+      { num: '2', title: 'AI와 대화', desc: '생성된 프롬프트로 제품 개발 시작' },
+      { num: '3', title: 'pmpt save', desc: '진행 상황을 버전으로 저장' },
+      { num: '4', title: '공유', desc: '다른 사람들이 참고할 수 있게 아카이브' },
+    ],
+
+    // Features
+    featuresTitle: '핵심 기능',
+    features: [
+      {
+        icon: '⚡',
+        title: '6개 질문으로 빠른 시작',
+        desc: '복잡한 설정 없이 질문에 답하면 AI 프롬프트가 자동 생성됩니다.',
+      },
+      {
+        icon: '📚',
+        title: '버전 히스토리 자동 저장',
+        desc: '파일 변경을 감지해 자동으로 버전을 기록합니다. 언제든 과거로 돌아갈 수 있어요.',
+      },
+      {
+        icon: '🔗',
+        title: 'Git 연동',
+        desc: '각 버전에 커밋 해시가 기록되어 코드와 스펙을 연결할 수 있습니다.',
+      },
+      {
+        icon: '🔄',
+        title: '재현 가능한 과정',
+        desc: '다른 사람이 같은 단계를 밟아 비슷한 결과물을 만들 수 있습니다.',
+      },
+    ],
+
+    // Quick Start
+    quickTitle: '빠른 시작',
+    quickSteps: [
+      { cmd: 'npm i -g pmpt-cli', comment: '# CLI 설치' },
+      { cmd: 'pmpt init', comment: '# 프로젝트 초기화' },
+      { cmd: 'pmpt plan', comment: '# 6개 질문 → AI 프롬프트 생성' },
+      { cmd: '', comment: '# pmpt.md를 AI에게 전달하고 개발 시작!' },
+      { cmd: 'pmpt save', comment: '# 진행 상황 저장' },
+      { cmd: 'pmpt history', comment: '# 버전 히스토리 확인' },
+    ],
+
+    // Why PromptWiki
+    whyTitle: '왜 PromptWiki인가요?',
+    whyItems: [
+      {
+        before: '완성된 코드만 공개',
+        after: '만드는 과정 전체를 공유',
+        icon: '📦',
+      },
+      {
+        before: '"이 프롬프트 써봐"',
+        after: '"이렇게 진화시켜봐"',
+        icon: '💡',
+      },
+      {
+        before: '한 번 읽고 끝',
+        after: 'AI와 함께 재현 가능',
+        icon: '🔁',
+      },
+    ],
+
+    // Projects
     projectsTitle: '프로젝트 아카이브',
     projectsDesc: '다른 사람들의 제품 개발 과정을 탐색하세요',
     count: (n: number) => `${n}개의 프로젝트`,
@@ -47,10 +114,78 @@ const ui = {
     contribute: '첫 번째 프로젝트 등록하기 →',
   },
   en: {
+    // Hero
     hero: 'Share how you build\nwith AI.',
     heroSub: 'Answer 6 questions, get an AI prompt. Build with AI and record the journey.',
     cta: 'npm i -g pmpt-cli && pmpt init',
     ctaHint: 'Start in 1 minute',
+
+    // How it Works
+    howTitle: 'How it works',
+    howSteps: [
+      { num: '1', title: 'pmpt plan', desc: 'Answer 6 questions, get AI prompt' },
+      { num: '2', title: 'Build with AI', desc: 'Start development with generated prompt' },
+      { num: '3', title: 'pmpt save', desc: 'Save progress as versions' },
+      { num: '4', title: 'Share', desc: 'Archive for others to learn from' },
+    ],
+
+    // Features
+    featuresTitle: 'Key Features',
+    features: [
+      {
+        icon: '⚡',
+        title: 'Quick start with 6 questions',
+        desc: 'No complex setup. Just answer questions and get an AI prompt automatically.',
+      },
+      {
+        icon: '📚',
+        title: 'Auto version history',
+        desc: 'Detects file changes and records versions automatically. Go back anytime.',
+      },
+      {
+        icon: '🔗',
+        title: 'Git integration',
+        desc: 'Each version links to a commit hash, connecting your code and specs.',
+      },
+      {
+        icon: '🔄',
+        title: 'Reproducible process',
+        desc: 'Others can follow the same steps to create similar results.',
+      },
+    ],
+
+    // Quick Start
+    quickTitle: 'Quick Start',
+    quickSteps: [
+      { cmd: 'npm i -g pmpt-cli', comment: '# Install CLI' },
+      { cmd: 'pmpt init', comment: '# Initialize project' },
+      { cmd: 'pmpt plan', comment: '# 6 questions → AI prompt' },
+      { cmd: '', comment: '# Send pmpt.md to AI and start building!' },
+      { cmd: 'pmpt save', comment: '# Save progress' },
+      { cmd: 'pmpt history', comment: '# View version history' },
+    ],
+
+    // Why PromptWiki
+    whyTitle: 'Why PromptWiki?',
+    whyItems: [
+      {
+        before: 'Share finished code only',
+        after: 'Share the entire process',
+        icon: '📦',
+      },
+      {
+        before: '"Use this prompt"',
+        after: '"Evolve prompts like this"',
+        icon: '💡',
+      },
+      {
+        before: 'Read once and forget',
+        after: 'Reproduce with AI',
+        icon: '🔁',
+      },
+    ],
+
+    // Projects
     projectsTitle: 'Project Archive',
     projectsDesc: 'Explore how others built their products',
     count: (n: number) => `${n} projects`,
@@ -70,16 +205,102 @@ const ui = {
       <p class="text-gray-600 dark:text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
         {ui.heroSub}
       </p>
-      <div class="flex flex-wrap justify-center gap-3 text-sm">
+      <div class="flex flex-col items-center gap-2">
         <code class="bg-gray-900 dark:bg-gray-800 text-green-400 px-5 py-2.5 rounded-lg font-mono text-base">
           {ui.cta}
         </code>
+        <span class="text-gray-500 dark:text-gray-400 text-sm">{ui.ctaHint}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="py-16 px-4 bg-white dark:bg-gray-950">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-12">
+        {ui.howTitle}
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {ui.howSteps.map((step, i) => (
+          <div class="relative">
+            <div class="flex flex-col items-center text-center">
+              <div class="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl font-bold mb-4">
+                {step.num}
+              </div>
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{step.title}</h3>
+              <p class="text-gray-500 dark:text-gray-400 text-sm">{step.desc}</p>
+            </div>
+            {i < 3 && (
+              <div class="hidden lg:block absolute top-6 left-full w-full">
+                <svg class="w-full h-4 text-gray-300 dark:text-gray-700" viewBox="0 0 100 16">
+                  <path d="M0 8 L90 8 M85 3 L95 8 L85 13" stroke="currentColor" fill="none" stroke-width="2"/>
+                </svg>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="py-16 px-4 bg-gray-50 dark:bg-gray-900">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-12">
+        {ui.featuresTitle}
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {ui.features.map((feature) => (
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="text-3xl mb-3">{feature.icon}</div>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">{feature.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start -->
+  <section class="py-16 px-4 bg-white dark:bg-gray-950">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
+        {ui.quickTitle}
+      </h2>
+      <div class="bg-gray-900 dark:bg-gray-800 rounded-xl p-6 font-mono text-sm overflow-x-auto">
+        {ui.quickSteps.map((step) => (
+          <div class="flex gap-4 py-1">
+            <span class="text-gray-500 select-none">$</span>
+            <span class="text-green-400">{step.cmd}</span>
+            <span class="text-gray-500">{step.comment}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Why PromptWiki -->
+  <section class="py-16 px-4 bg-gray-50 dark:bg-gray-900">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-12">
+        {ui.whyTitle}
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {ui.whyItems.map((item) => (
+          <div class="text-center">
+            <div class="text-4xl mb-4">{item.icon}</div>
+            <div class="space-y-2">
+              <div class="text-gray-400 dark:text-gray-500 line-through text-sm">{item.before}</div>
+              <div class="text-gray-900 dark:text-white font-medium">{item.after}</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   </section>
 
   <!-- Projects Section -->
-  <section class="max-w-5xl mx-auto px-4 py-12">
+  <section class="max-w-5xl mx-auto px-4 py-16">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">
