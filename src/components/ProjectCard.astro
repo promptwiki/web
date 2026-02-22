@@ -1,0 +1,76 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  description: string;
+  category: string[];
+  tags: string[];
+  status: 'in-progress' | 'completed' | 'archived';
+  author: string;
+  iterationCount: number;
+  lang: 'ko' | 'en';
+}
+
+const { slug, title, description, category, tags, status, author, iterationCount, lang } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const statusLabel = {
+  ko: { 'in-progress': '진행 중', 'completed': '완료', 'archived': '보관됨' },
+  en: { 'in-progress': 'In Progress', 'completed': 'Completed', 'archived': 'Archived' },
+}[lang];
+
+const statusColor = {
+  'in-progress': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  'completed': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  'archived': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+};
+
+const iterationLabel = lang === 'ko' ? '버전' : 'versions';
+---
+
+<a
+  href={`${base}/${lang}/projects/${slug}`}
+  class="block p-5 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-lg dark:hover:shadow-brand-900/20 transition-all duration-200 group bg-white dark:bg-gray-900"
+>
+  <div class="flex items-start justify-between gap-3 mb-3">
+    <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors leading-snug">
+      {title}
+    </h3>
+    <span class={`shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusColor[status]}`}>
+      {statusLabel[status]}
+    </span>
+  </div>
+
+  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+    {description}
+  </p>
+
+  <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+    <div class="flex items-center gap-2">
+      <span class="flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        @{author}
+      </span>
+      <span class="text-gray-300 dark:text-gray-600">|</span>
+      <span class="flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        {iterationCount} {iterationLabel}
+      </span>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+    {category.slice(0, 2).map((cat) => (
+      <span class="bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded text-xs">
+        {cat}
+      </span>
+    ))}
+    {tags.slice(0, 3).map((tag) => (
+      <span class="text-gray-400 dark:text-gray-500 text-xs">#{tag}</span>
+    ))}
+  </div>
+</a>

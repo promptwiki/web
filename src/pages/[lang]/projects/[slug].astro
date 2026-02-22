@@ -1,0 +1,351 @@
+---
+import { getCollection, type CollectionEntry, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ProjectPlayer from '../../../components/ProjectPlayer.tsx';
+
+export async function getStaticPaths() {
+  const allProjects = await getCollection('projects');
+  const allVersions = await getCollection('versions');
+
+  const paths = [];
+
+  for (const project of allProjects) {
+    const projectVersions = allVersions
+      .filter((v) => v.id.startsWith(project.data.slug + '/'))
+      .sort((a, b) => a.data.version - b.data.version);
+
+    // 각 버전을 HTML로 렌더링
+    const renderedVersions = [];
+    for (const v of projectVersions) {
+      const rendered = await render(v);
+      renderedVersions.push({
+        version: v.data.version,
+        title: v.data.title,
+        summary: v.data.summary || '',
+        createdAt: v.data.createdAt,
+        highlights: v.data.highlights || [],
+        html: rendered.Content ? '' : '', // 나중에 처리
+        rawId: v.id,
+      });
+    }
+
+    paths.push({
+      params: { lang: project.data.lang, slug: project.data.slug },
+      props: { project, versions: projectVersions, renderedVersions },
+    });
+  }
+
+  return paths;
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  versions: CollectionEntry<'versions'>[];
+  renderedVersions: Array<{
+    version: number;
+    title: string;
+    summary: string;
+    createdAt: string;
+    highlights: string[];
+    html: string;
+    rawId: string;
+  }>;
+}
+
+const { project, versions } = Astro.props;
+const { lang } = Astro.params as { lang: 'ko' | 'en' };
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// URL 파라미터에서 초기 버전 가져오기
+const initialVersion = Number(Astro.url.searchParams.get('v')) || 1;
+
+const ui = {
+  ko: {
+    back: '← 목록으로',
+    by: '작성자',
+    versionCount: '버전',
+    status: { 'in-progress': '진행 중', 'completed': '완료', 'archived': '보관됨' },
+  },
+  en: {
+    back: '← Back to list',
+    by: 'by',
+    versionCount: 'versions',
+    status: { 'in-progress': 'In Progress', 'completed': 'Completed', 'archived': 'Archived' },
+  },
+}[lang];
+
+const statusColor = {
+  'in-progress': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  'completed': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  'archived': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+};
+
+// 현재 표시할 버전
+const currentVersionData = versions.find((v) => v.data.version === initialVersion) || versions[0];
+---
+
+<BaseLayout title={project.data.title} lang={lang}>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- 헤더 -->
+    <header class="mb-8">
+      <a
+        href={`${base}/${lang}`}
+        class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 mb-4"
+      >
+        {ui.back}
+      </a>
+
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {project.data.title}
+            </h1>
+            <span class={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${statusColor[project.data.status]}`}>
+              {ui.status[project.data.status]}
+            </span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 mb-3">
+            {project.data.description}
+          </p>
+          <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+            <span class="flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              {ui.by} @{project.data.author}
+            </span>
+            <span>•</span>
+            <span>{versions.length} {ui.versionCount}</span>
+            <span>•</span>
+            <span>{project.data.updatedAt}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 태그 -->
+      <div class="flex flex-wrap gap-2 mt-4">
+        {project.data.category.map((cat: string) => (
+          <span class="bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 px-2.5 py-1 rounded text-xs font-medium">
+            {cat}
+          </span>
+        ))}
+        {project.data.tags.map((tag: string) => (
+          <span class="text-gray-500 dark:text-gray-400 text-xs">#{tag}</span>
+        ))}
+      </div>
+    </header>
+
+    <!-- 콘텐츠 영역 -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- 타임라인 사이드바 -->
+      <aside class="lg:w-56 shrink-0">
+        <div class="lg:sticky lg:top-20 space-y-1">
+          <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+            Timeline
+          </h3>
+          <div class="space-y-1 max-h-[60vh] overflow-y-auto pr-2" id="timeline">
+            {versions.map((v) => (
+              <a
+                href={`?v=${v.data.version}`}
+                data-version={v.data.version}
+                class={`version-link block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                  v.data.version === initialVersion
+                    ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-medium'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                <div class="flex items-center gap-2">
+                  <span
+                    class={`w-2 h-2 rounded-full shrink-0 ${
+                      v.data.version === initialVersion
+                        ? 'bg-brand-500'
+                        : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  />
+                  <div class="flex-1 min-w-0">
+                    <span class="truncate block">
+                      v{v.data.version} - {v.data.title}
+                    </span>
+                    {v.data.git && (
+                      <span class="text-xs font-mono text-gray-400 dark:text-gray-500">
+                        {v.data.git.commit}{v.data.git.dirty ? '*' : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <!-- 메인 콘텐츠 -->
+      <main class="flex-1 min-w-0">
+        <!-- 버전 헤더 -->
+        <div class="mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
+          <div class="flex flex-wrap items-center gap-3 mb-2">
+            <span class="bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-2.5 py-1 rounded-full text-sm font-medium">
+              {lang === 'ko' ? '버전' : 'Version'} {currentVersionData.data.version}
+            </span>
+            <span class="text-gray-400 dark:text-gray-500 text-sm">
+              {currentVersionData.data.createdAt}
+            </span>
+            {currentVersionData.data.git && (
+              <span class="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded text-xs font-mono">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                {currentVersionData.data.git.commit}
+                {currentVersionData.data.git.dirty && (
+                  <span class="text-yellow-600 dark:text-yellow-400" title={lang === 'ko' ? '커밋되지 않은 변경' : 'Uncommitted changes'}>*</span>
+                )}
+              </span>
+            )}
+          </div>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+            {currentVersionData.data.title}
+          </h2>
+          {currentVersionData.data.summary && (
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
+              {currentVersionData.data.summary}
+            </p>
+          )}
+        </div>
+
+        <!-- 하이라이트 -->
+        {currentVersionData.data.highlights && currentVersionData.data.highlights.length > 0 && (
+          <div class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg">
+            <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-400 mb-2">
+              {lang === 'ko' ? '주요 변경점' : 'Highlights'}
+            </h3>
+            <ul class="space-y-1">
+              {currentVersionData.data.highlights.map((h: string) => (
+                <li class="text-sm text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                  <span class="text-amber-500 mt-1">•</span>
+                  {h}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <!-- Checkpoint: 기대 결과물 검증 -->
+        {currentVersionData.data.checkpoint && (
+          <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 rounded-lg">
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 class="text-sm font-semibold text-emerald-800 dark:text-emerald-400">
+                {lang === 'ko' ? 'Checkpoint: 이 단계의 기대 결과물' : 'Checkpoint: Expected Output'}
+              </h3>
+            </div>
+
+            {currentVersionData.data.checkpoint.description && (
+              <p class="text-sm text-emerald-700 dark:text-emerald-300 mb-3">
+                {currentVersionData.data.checkpoint.description}
+              </p>
+            )}
+
+            {currentVersionData.data.checkpoint.criteria && currentVersionData.data.checkpoint.criteria.length > 0 && (
+              <div class="mb-3">
+                <h4 class="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                  {lang === 'ko' ? '체크리스트' : 'Checklist'}
+                </h4>
+                <ul class="space-y-1.5">
+                  {currentVersionData.data.checkpoint.criteria.map((c: string) => (
+                    <li class="text-sm text-emerald-700 dark:text-emerald-300 flex items-start gap-2">
+                      <span class="mt-0.5">
+                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {currentVersionData.data.checkpoint.validationPrompt && (
+              <details class="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800/30">
+                <summary class="text-xs font-medium text-emerald-600 dark:text-emerald-400 cursor-pointer hover:text-emerald-700 dark:hover:text-emerald-300">
+                  {lang === 'ko' ? 'AI 검증 프롬프트 보기' : 'View AI Validation Prompt'}
+                </summary>
+                <pre class="mt-2 p-3 bg-emerald-100 dark:bg-emerald-900/20 rounded text-xs text-emerald-800 dark:text-emerald-300 whitespace-pre-wrap overflow-x-auto">{currentVersionData.data.checkpoint.validationPrompt}</pre>
+              </details>
+            )}
+          </div>
+        )}
+
+        <!-- 본문 -->
+        <article class="prose dark:prose-invert prose-gray max-w-none
+          prose-headings:font-bold
+          prose-a:text-brand-600 dark:prose-a:text-brand-400
+          prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-gray-900 dark:prose-pre:bg-gray-800">
+          {async () => {
+            const { Content } = await currentVersionData.render();
+            return <Content />;
+          }}
+        </article>
+
+        <!-- 네비게이션 컨트롤 -->
+        <div class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex items-center justify-between gap-4">
+            <a
+              href={initialVersion > 1 ? `?v=${initialVersion - 1}` : undefined}
+              class={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                ${initialVersion <= 1
+                  ? 'opacity-40 cursor-not-allowed pointer-events-none'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              {lang === 'ko' ? '이전' : 'Prev'}
+            </a>
+
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              {lang === 'ko' ? '버전' : 'Version'} {initialVersion} / {versions.length}
+            </div>
+
+            <a
+              href={initialVersion < versions.length ? `?v=${initialVersion + 1}` : undefined}
+              class={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                ${initialVersion >= versions.length
+                  ? 'opacity-40 cursor-not-allowed pointer-events-none'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+            >
+              {lang === 'ko' ? '다음' : 'Next'}
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // 키보드 네비게이션
+  document.addEventListener('keydown', (e) => {
+    const url = new URL(window.location.href);
+    const currentVersion = Number(url.searchParams.get('v')) || 1;
+    const links = document.querySelectorAll('.version-link');
+    const maxVersion = links.length;
+
+    if (e.key === 'ArrowLeft' && currentVersion > 1) {
+      url.searchParams.set('v', String(currentVersion - 1));
+      window.location.href = url.toString();
+    } else if (e.key === 'ArrowRight' && currentVersion < maxVersion) {
+      url.searchParams.set('v', String(currentVersion + 1));
+      window.location.href = url.toString();
+    }
+  });
+</script>

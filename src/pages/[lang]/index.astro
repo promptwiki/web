@@ -1,92 +1,107 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import DocCard from '../../components/DocCard.astro';
-import FilterBar from '../../components/FilterBar.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
 
 export function getStaticPaths() {
   return [{ params: { lang: 'ko' } }, { params: { lang: 'en' } }];
 }
 
 const { lang } = Astro.params as { lang: 'ko' | 'en' };
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-const purpose = Astro.url.searchParams.get('purpose') ?? undefined;
-const level = Astro.url.searchParams.get('level') ?? undefined;
+// 프로젝트 목록 가져오기
+const allProjects = await getCollection('projects');
+const allVersions = await getCollection('versions');
 
-const allDocs = await getCollection('docs');
+type ProjectData = CollectionEntry<'projects'>['data'] & { iterationCount: number };
 
-const docs = allDocs
-  .filter((entry) => {
-    const data = entry.data;
-    // Filter out non-document entries (meta files without purpose)
-    if (!data.purpose) return false;
-    // Language match
-    if (data.lang && data.lang !== lang) return false;
-    // Purpose filter
-    if (purpose && data.purpose !== purpose) return false;
-    // Level filter
-    if (level && data.level !== level) return false;
-    // Only show stable or recommended
-    if (data.status === 'draft' || data.status === 'review' || data.status === 'deprecated') return false;
-    return true;
+// 프로젝트별 버전 수 계산
+const projectsWithCount: ProjectData[] = allProjects
+  .filter((project: CollectionEntry<'projects'>) => project.data.lang === lang)
+  .map((project: CollectionEntry<'projects'>) => {
+    const projectVersions = allVersions.filter((v: CollectionEntry<'versions'>) =>
+      v.id.startsWith(project.data.slug + '/')
+    );
+    return {
+      ...project.data,
+      iterationCount: projectVersions.length,
+    };
   })
   .sort((a, b) => {
-    // recommended first
-    const order = { recommended: 0, stable: 1 };
-    const ao = order[a.data.status as keyof typeof order] ?? 2;
-    const bo = order[b.data.status as keyof typeof order] ?? 2;
-    return ao - bo;
+    // completed 먼저, 그 다음 updatedAt 순
+    if (a.status === 'completed' && b.status !== 'completed') return -1;
+    if (a.status !== 'completed' && b.status === 'completed') return 1;
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
 
 const ui = {
   ko: {
-    hero: 'AI에게 일을 시키는 법을,\n집단 지성으로 만든다.',
-    heroSub: 'GitHub 기반 기여로 검증·진화하는 AI 활용 가이드',
-    count: (n: number) => `${n}개의 문서`,
-    noResult: '해당 조건의 문서가 없습니다.',
-    contribute: '문서 기여하기 →',
+    hero: 'AI와 만드는 법을,\n모두와 나눈다.',
+    heroSub: '제품 개발 과정을 기록하고 공유하는 플랫폼. 다른 사람의 여정에서 배우고, 나의 여정을 나누세요.',
+    cta: 'npx promptwiki init',
+    projectsTitle: '프로젝트 아카이브',
+    projectsDesc: '다른 사람들의 제품 개발 과정을 탐색하세요',
+    count: (n: number) => `${n}개의 프로젝트`,
+    noResult: '아직 등록된 프로젝트가 없습니다.',
+    contribute: '첫 번째 프로젝트 등록하기 →',
   },
   en: {
-    hero: 'Collective intelligence\nfor prompting AI.',
-    heroSub: 'Verified and evolving AI guides, built through GitHub contributions.',
-    count: (n: number) => `${n} documents`,
-    noResult: 'No documents found for this filter.',
-    contribute: 'Contribute a doc →',
+    hero: 'Share how you build\nwith AI.',
+    heroSub: 'A platform to record and share your product development journey. Learn from others, share yours.',
+    cta: 'npx promptwiki init',
+    projectsTitle: 'Project Archive',
+    projectsDesc: 'Explore how others built their products',
+    count: (n: number) => `${n} projects`,
+    noResult: 'No projects yet.',
+    contribute: 'Submit the first project →',
   },
 }[lang];
 ---
 
 <BaseLayout lang={lang}>
   <!-- Hero -->
-  <section class="bg-gradient-to-b from-brand-50 to-white dark:from-gray-900 dark:to-gray-950 py-16 px-4">
-    <div class="max-w-5xl mx-auto text-center">
-      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white leading-tight whitespace-pre-line mb-3">
+  <section class="bg-gradient-to-b from-brand-50 to-white dark:from-gray-900 dark:to-gray-950 py-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white leading-tight whitespace-pre-line mb-4">
         {ui.hero}
       </h1>
-      <p class="text-gray-600 dark:text-gray-400 text-lg mb-8">{ui.heroSub}</p>
+      <p class="text-gray-600 dark:text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
+        {ui.heroSub}
+      </p>
       <div class="flex flex-wrap justify-center gap-3 text-sm">
-        <code class="bg-gray-900 dark:bg-gray-800 text-green-400 px-4 py-2 rounded-lg font-mono">
-          npx promptwiki search "코드 리뷰"
+        <code class="bg-gray-900 dark:bg-gray-800 text-green-400 px-5 py-2.5 rounded-lg font-mono text-base">
+          {ui.cta}
         </code>
       </div>
     </div>
   </section>
 
-  <!-- Document list -->
-  <section class="max-w-5xl mx-auto px-4 py-10">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-      <FilterBar lang={lang} activePurpose={purpose} activeLevel={level} />
+  <!-- Projects Section -->
+  <section class="max-w-5xl mx-auto px-4 py-12">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+          {ui.projectsTitle}
+        </h2>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">
+          {ui.projectsDesc}
+        </p>
+      </div>
       <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-        {ui.count(docs.length)}
+        {ui.count(projectsWithCount.length)}
       </span>
     </div>
 
-    {docs.length === 0 ? (
+    {projectsWithCount.length === 0 ? (
       <div class="text-center py-20 text-gray-400 dark:text-gray-500">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
         <p class="text-lg mb-4">{ui.noResult}</p>
         <a
-          href={`https://github.com/promptwiki/content`}
+          href="https://github.com/promptwiki"
           target="_blank"
           rel="noopener noreferrer"
           class="text-brand-600 dark:text-brand-400 hover:underline text-sm"
@@ -95,22 +110,20 @@ const ui = {
         </a>
       </div>
     ) : (
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {docs.map((doc) => {
-          const slugParts = doc.id.replace(/\.mdx?$/, '').split('/');
-          const href = `${base}/${slugParts.join('/')}`;
-          return (
-            <DocCard
-              title={doc.data.title}
-              purpose={doc.data.purpose}
-              level={doc.data.level}
-              status={doc.data.status}
-              tags={doc.data.tags}
-              href={href}
-              lang={lang}
-            />
-          );
-        })}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {projectsWithCount.map((project: ProjectData) => (
+          <ProjectCard
+            slug={project.slug}
+            title={project.title}
+            description={project.description}
+            category={project.category}
+            tags={project.tags}
+            status={project.status}
+            author={project.author}
+            iterationCount={project.iterationCount}
+            lang={lang}
+          />
+        ))}
       </div>
     )}
   </section>

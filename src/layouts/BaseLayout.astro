@@ -9,8 +9,13 @@ const siteTitle = title === 'PromptWiki' ? 'PromptWiki' : `${title} — PromptWi
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 const nav = {
-  ko: { docs: '문서', contribute: '기여하기', search: '검색...' },
-  en: { docs: 'Docs', contribute: 'Contribute', search: 'Search...' },
+  ko: { projects: '프로젝트', github: 'GitHub', search: '검색...' },
+  en: { projects: 'Projects', github: 'GitHub', search: 'Search...' },
+}[lang];
+
+const description = {
+  ko: 'AI와 만드는 법을, 모두와 나눈다. 제품 개발 과정을 기록하고 공유하는 플랫폼.',
+  en: 'Share how you build with AI. A platform to record and share your product development journey.',
 }[lang];
 ---
 
@@ -19,7 +24,7 @@ const nav = {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="AI에게 일을 시키는 법을, 집단 지성으로 만든다." />
+    <meta name="description" content={description} />
     <title>{siteTitle}</title>
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
     <!-- Pagefind styles -->
@@ -27,7 +32,7 @@ const nav = {
   </head>
   <body class="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
     <header class="border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur z-50">
-      <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+      <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
         <a href={`${base}/${lang}`} class="font-bold text-lg text-brand-600 dark:text-brand-400 hover:opacity-80 transition-opacity shrink-0">
           PromptWiki
         </a>
@@ -52,14 +57,19 @@ const nav = {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
-          <a href={`${base}/${lang}`} class="hidden sm:block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">{nav.docs}</a>
+          <a href={`${base}/${lang}`} class="hidden sm:block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+            {nav.projects}
+          </a>
           <a
-            href="https://github.com/promptwiki/content/blob/main/_meta/contributing.md"
+            href="https://github.com/promptwiki"
             target="_blank"
             rel="noopener noreferrer"
-            class="hidden sm:block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            class="hidden sm:flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
-            {nav.contribute}
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+            </svg>
+            {nav.github}
           </a>
           <!-- Dark mode toggle -->
           <button id="theme-toggle" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" aria-label="Toggle dark mode">
@@ -96,7 +106,14 @@ const nav = {
 
     <footer class="border-t border-gray-200 dark:border-gray-800 py-8 mt-16">
       <div class="max-w-5xl mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        <p>PromptWiki — CC BY-SA 4.0 · <a href="https://github.com/promptwiki" target="_blank" rel="noopener noreferrer" class="hover:underline">GitHub</a></p>
+        <p class="mb-2">
+          <span class="font-medium text-gray-700 dark:text-gray-300">PromptWiki</span>
+          — {lang === 'ko' ? 'AI와 만드는 법을, 모두와 나눈다' : 'Share how you build with AI'}
+        </p>
+        <p>
+          CC BY-SA 4.0 ·
+          <a href="https://github.com/promptwiki" target="_blank" rel="noopener noreferrer" class="hover:underline">GitHub</a>
+        </p>
       </div>
     </footer>
 

@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import mdx from '@astrojs/mdx';
+import react from '@astrojs/react';
 
 export default defineConfig({
   site: 'https://pmptwiki.com',
@@ -12,5 +13,5 @@ export default defineConfig({
       prefixDefaultLocale: true,
     },
   },
-  integrations: [tailwind(), mdx()],
+  integrations: [tailwind(), mdx(), react()],
 });

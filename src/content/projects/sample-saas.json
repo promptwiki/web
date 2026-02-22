@@ -1,0 +1,13 @@
+{
+  "slug": "sample-saas",
+  "title": "고객 관리 SaaS 개발 과정",
+  "description": "처음 아이디어부터 MVP 스펙까지, AI와 함께 발전시킨 제품 설계 과정",
+  "lang": "ko",
+  "category": ["saas", "web-app", "b2b"],
+  "tags": ["react", "nextjs", "postgresql", "auth", "dashboard"],
+  "status": "completed",
+  "author": "promptwiki",
+  "contributors": [],
+  "createdAt": "2026-02-01",
+  "updatedAt": "2026-02-20"
+}
